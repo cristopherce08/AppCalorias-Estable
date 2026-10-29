@@ -1,4 +1,4 @@
-const CACHE_NAME = 'micalorias-estable-shell-v1';
+const CACHE_NAME = 'micalorias-estable-shell-v2';
 const ASSETS = [
   './',
   './index.html',
