@@ -1,0 +1,16 @@
+{
+  "id": "/AppCalorias-Estable/",
+  "name": "MiCalorías Estable",
+  "short_name": "MiCalorías Est.",
+  "description": "Registro privado de calorías y proteínas (Versión Estable)",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8fc",
+  "theme_color": "#f7f8fc",
+  "icons": [
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

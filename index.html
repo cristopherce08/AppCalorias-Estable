@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f8fc" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MiCalorías Estable" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="description" content="Diario de calorías, proteínas, calculadora energética y seguimiento de peso. Sin cuentas ni servidores." />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>MiCalorías Estable — Diario, Proteínas, Peso y Calculadora</title>
+</head>
+<body>
+  <!-- AVISO DISCRETO DE ACTUALIZACIÓN DISPONIBLE -->
+  <aside id="update-banner" class="update-banner" hidden role="status" aria-live="polite">
+    <div class="update-banner-info">
+      <span class="update-banner-icon" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+      </span>
+      <span class="update-banner-text">Nueva versión disponible</span>
+    </div>
+    <button type="button" id="btn-apply-update" class="update-banner-btn">Actualizar</button>
+  </aside>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">✳</div>
+        <div><strong>MiCalorías <span style="font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: #e0e7ff; color: #3730a3; margin-left: 5px; vertical-align: middle;">Estable</span></strong><span>Diario, peso y gasto calórico</span></div>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <!-- VISTA 1: DIARIO (HOY) -->
+      <section id="view-diario" class="view" aria-labelledby="heading-diario">
+        <div class="section-lead">
+          <div><div class="eyebrow">TU REGISTRO DIARIO</div><h1 id="heading-diario">Hoy</h1></div>
+          <button type="button" id="btn-today" class="text-button">Ir a Hoy</button>
+        </div>
+
+        <!-- AVISO DE CAMBIO EN ESTIMACIÓN DE MANTENIMIENTO -->
+        <div id="calc-update-banner" class="banner-alert" hidden>
+          <div class="banner-content">
+            <span class="banner-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>
+            </span>
+            <div>
+              <strong>Tu estimación de mantenimiento ha cambiado</strong>
+              <p id="calc-update-banner-text">Se actualizó según tu nuevo peso. ¿Deseas revisar tu objetivo diario?</p>
+            </div>
+          </div>
+          <div class="banner-actions">
+            <button type="button" id="btn-review-goal-banner" class="banner-btn primary">Revisar objetivo</button>
+            <button type="button" id="btn-dismiss-goal-banner" class="banner-btn secondary">Mantener actual</button>
+          </div>
+        </div>
+
+        <div class="date-picker-row">
+          <button type="button" id="btn-prev-date" class="square-btn" aria-label="Día anterior">‹</button>
+          <label class="date-field">
+            <span id="date-pretty">Selecciona una fecha</span>
+            <input id="diary-date" type="date" aria-label="Fecha del diario" />
+          </label>
+          <button type="button" id="btn-next-date" class="square-btn" aria-label="Día siguiente">›</button>
+        </div>
+
+        <!-- TARJETA DUAL DE TOTALES (CALORÍAS Y PROTEÍNAS) -->
+        <div class="dual-total-card">
+          <!-- TARJETA DE CALORÍAS -->
+          <div class="total-metric metric-kcal">
+            <div class="metric-head">
+              <span class="metric-label">CALORÍAS</span>
+              <span class="metric-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-values">
+              <span id="day-total-kcal" class="metric-main">0</span>
+              <span class="metric-unit">kcal</span>
+            </div>
+
+            <!-- CUANDO EXISTE OBJETIVO CALÓRICO ACTIVO -->
+            <div id="goal-kcal-wrapper" class="goal-wrapper" hidden>
+              <div class="progress-bar-bg" role="progressbar" id="progress-bar-kcal" aria-valuenow="0" aria-valuemin="0" aria-valuemax="2000" aria-label="Progreso de calorías">
+                <div id="progress-fill-kcal" class="progress-fill fill-kcal" style="width:0%"></div>
+              </div>
+              <div id="goal-kcal-text" class="goal-text">0 / 2,000 kcal</div>
+            </div>
+          </div>
+
+          <!-- TARJETA DE PROTEÍNAS -->
+          <div class="total-metric metric-protein">
+            <div class="metric-head">
+              <span class="metric-label">PROTEÍNAS</span>
+              <span class="metric-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6.5 6.5 11 11"/>
+                  <path d="m21 21-1-1"/>
+                  <path d="m3 3 1 1"/>
+                  <path d="m18 22 4-4"/>
+                  <path d="m2 6 4-4"/>
+                  <path d="m3 10 7-7"/>
+                  <path d="m14 21 7-7"/>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-values">
+              <span id="day-total-protein" class="metric-main">0</span>
+              <span class="metric-unit">g</span>
+              <span id="day-protein-partial-badge" class="partial-badge" title="Total parcial: faltan datos en algunos ingredientes" hidden>*</span>
+            </div>
+            <div id="goal-protein-wrapper" class="goal-wrapper" hidden>
+              <div class="progress-bar-bg" role="progressbar" id="progress-bar-protein" aria-valuenow="0" aria-valuemin="0" aria-valuemax="140" aria-label="Progreso de proteínas">
+                <div id="progress-fill-protein" class="progress-fill fill-protein" style="width:0%"></div>
+              </div>
+              <div id="goal-protein-text" class="goal-text">0 / 140 g</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUANDO NO EXISTE OBJETIVO: REFERENCIA INFORMATIVA DE MANTENIMIENTO -->
+        <div id="maint-ref-wrapper" class="maint-ref-card" hidden>
+          <div class="maint-ref-left">
+            <span class="maint-tag">Referencia</span>
+            <span class="maint-label">Mantenimiento</span>
+          </div>
+          <div id="maint-ref-text" class="maint-value">~2,300 kcal/día</div>
+        </div>
+
+        <div id="protein-partial-note" class="partial-note" hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><em>Total de proteínas parcial:</em> hay ingredientes sin proteínas registradas. Toca ✎ para completarlos.
+        </div>
+
+        <div id="meals-container" class="meals-container"></div>
+
+        <button type="button" id="btn-quick-add-main" class="primary-button wide-button">＋ Registrar comida</button>
+      </section>
+
+      <!-- VISTA 2: MIS ALIMENTOS (BIBLIOTECA) -->
+      <section id="view-alimentos" class="view" hidden aria-labelledby="heading-alimentos">
+        <div class="section-lead">
+          <div><div class="eyebrow">TU BIBLIOTECA</div><h1 id="heading-alimentos">Mis alimentos</h1></div>
+          <button type="button" id="btn-create-food" class="primary-button compact">＋ Nuevo alimento</button>
+        </div>
+        <p class="muted-intro">Guarda tus ingredientes y porciones habituales (ej.: scoop de proteína, lata de atún, avena) para reutilizarlos con un toque.</p>
+
+        <label class="search-field">
+          <span aria-hidden="true">⌕</span>
+          <input id="food-search" type="search" placeholder="Buscar alimento o marca..." autocomplete="off" />
+        </label>
+
+        <div class="filter-chips">
+          <button type="button" class="chip active" id="chip-filter-all">Todos (<span id="count-foods-all">0</span>)</button>
+          <button type="button" class="chip" id="chip-filter-favs">⭐ Favoritos (<span id="count-foods-favs">0</span>)</button>
+        </div>
+
+        <div id="foods-container" class="foods-container"></div>
+      </section>
+
+      <!-- VISTA 3: MI PESO (SEGUIMIENTO SEMANAL) -->
+      <section id="view-peso" class="view" hidden aria-labelledby="heading-peso">
+        <div class="section-lead">
+          <div><div class="eyebrow">SEGUIMIENTO CORPORAL</div><h1 id="heading-peso">Mi peso</h1></div>
+          <button type="button" id="btn-add-weight" class="primary-button compact">＋ Registrar peso</button>
+        </div>
+        <p class="muted-intro">Registra tu peso periódicamente (idealmente una vez por semana). Las fluctuaciones a corto plazo reflejan agua e hidratación; observa la tendencia general.</p>
+
+        <!-- TARJETAS DE RESUMEN DE PESO -->
+        <div class="weight-summary-grid">
+          <div class="weight-stat-card">
+            <span class="stat-label">ÚLTIMO PESO</span>
+            <div class="stat-value"><strong id="stat-last-weight">—</strong> <span class="stat-unit">kg</span></div>
+            <span id="stat-last-date" class="stat-sub">Sin mediciones</span>
+          </div>
+          <div class="weight-stat-card">
+            <span class="stat-label">CAMBIO RECIENTE</span>
+            <div class="stat-value" id="stat-diff-recent">—</div>
+            <span class="stat-sub">vs. anterior registro</span>
+          </div>
+          <div class="weight-stat-card">
+            <span class="stat-label">CAMBIO TOTAL</span>
+            <div class="stat-value" id="stat-diff-total">—</div>
+            <span class="stat-sub">desde la 1.ª medición</span>
+          </div>
+        </div>
+
+        <!-- GRÁFICA DE EVOLUCIÓN RESPONSIVE (SVG NATIVO) -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <h2>Evolución de peso</h2>
+              <span id="chart-range-info" class="chart-sub">Tendencia histórica</span>
+            </div>
+            <div class="chart-periods">
+              <button type="button" class="chip active" data-chart-period="4w">4 semanas</button>
+              <button type="button" class="chip" data-chart-period="3m">3 meses</button>
+              <button type="button" class="chip" data-chart-period="all">Todo</button>
+            </div>
+          </div>
+
+          <div id="weight-chart-container" class="weight-chart-container">
+            <svg id="weight-svg-chart" class="weight-svg-chart" viewBox="0 0 500 220" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div id="chart-empty-state" class="chart-empty" hidden>
+              Registra al menos 2 pesos para trazar la gráfica de evolución.
+            </div>
+          </div>
+
+          <div class="chart-footer-row">
+            <button type="button" id="btn-toggle-accessible-table" class="text-button-mini">Ver tabla de datos accesible</button>
+          </div>
+
+          <div id="accessible-weight-table-wrap" class="accessible-table-wrap" hidden>
+            <table class="data-table" aria-label="Historial de mediciones de peso">
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Peso (kg)</th>
+                  <th scope="col">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody id="accessible-weight-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LISTA CRONOLÓGICA DE REGISTROS DE PESO -->
+        <div class="history-lead-row">
+          <h2>Historial de mediciones</h2>
+          <span id="weight-count-label" class="muted">0 registros</span>
+        </div>
+        <div id="weights-list-container" class="weights-list-container"></div>
+      </section>
+
+      <!-- VISTA 4: CALCULADORA DE CALORÍAS (MIFFLIN-ST JEOR & TDEE) -->
+      <section id="view-calculadora" class="view" hidden aria-labelledby="heading-calc">
+        <div class="section-lead">
+          <div><div class="eyebrow">GASTO ENERGÉTICO</div><h1 id="heading-calc">Calculadora</h1></div>
+          <button type="button" id="btn-calc-back-diario" class="text-button">‹ Volver a Hoy</button>
+        </div>
+        <p class="muted-intro">Estima tu gasto energético en reposo (RMR) y de mantenimiento (TDEE) mediante la ecuación validada <strong>Mifflin-St Jeor (1990)</strong>.</p>
+
+        <!-- FORMULARIO DE LA CALCULADORA -->
+        <div class="settings-card">
+          <h2>Datos para el cálculo</h2>
+          <p class="muted">Puedes guardar estos datos en este iPhone para recalcular automáticamente cuando registres un nuevo peso.</p>
+
+          <div class="form-grid">
+            <label class="form-label">
+              Peso actual (kg) *
+              <input id="calc-weight" type="number" min="20" max="400" step="0.1" inputmode="decimal" placeholder="Ej.: 80.5" required />
+            </label>
+            <label class="form-label">
+              Estatura (cm) *
+              <input id="calc-height" type="number" min="80" max="260" step="1" inputmode="numeric" placeholder="Ej.: 178" required />
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label class="form-label">
+              Edad (años) *
+              <input id="calc-age" type="number" min="15" max="120" step="1" inputmode="numeric" placeholder="Ej.: 28" required />
+            </label>
+            <div>
+              <button type="button" id="btn-use-latest-weight" class="outline-button full-width" style="margin-top:22px">Usar mi último peso</button>
+            </div>
+          </div>
+
+          <label class="form-label" style="margin-top:8px">Parámetro fisiológico de la ecuación *</label>
+          <div class="base-type-toggle">
+            <label class="radio-pill">
+              <input type="radio" name="calc-param" value="male" checked />
+              <span>Masculino (+5)</span>
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="calc-param" value="female" />
+              <span>Femenino (-161)</span>
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="calc-param" value="unspecified" />
+              <span>Sin especificar (intervalo)</span>
+            </label>
+          </div>
+          <p class="param-explanation">
+            <em>Nota fisiológica:</em> La fórmula Mifflin-St Jeor utiliza esta constante exclusivamente debido a diferencias estadísticas medias en masa magra libre de grasa observadas en estudios metabólicos. Si eliges «Sin especificar», se calculará un intervalo orientativo sin asumir un número único falsamente preciso.
+          </p>
+
+          <label class="form-label" style="margin-top:14px">Nivel de actividad física diaria *</label>
+          <select id="calc-activity" class="activity-select" required>
+            <option value="1.20">Sedentario (x1.20) — Poco o ningún ejercicio, trabajo de escritorio</option>
+            <option value="1.375">Actividad ligera (x1.375) — Ejercicio ligero 1 a 3 días/semana</option>
+            <option value="1.55" selected>Actividad moderada (x1.55) — Ejercicio moderado 3 a 5 días/semana</option>
+            <option value="1.725">Actividad alta (x1.725) — Ejercicio intenso 6 a 7 días/semana</option>
+            <option value="1.90">Actividad muy alta (x1.90) — Atletas de competición o trabajo físico pesado</option>
+          </select>
+          <p class="muted" style="margin-top:6px;font-size:11.5px">Los factores son multiplicadores aproximados basados en promedios poblacionales, no mediciones de calorimetría directa.</p>
+
+          <button type="button" id="btn-run-calculation" class="primary-button wide-button" style="margin-top:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px;" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>Calcular gasto energético
+          </button>
+        </div>
+
+        <!-- TARJETA DE RESULTADOS DE LA CALCULADORA -->
+        <div id="calc-results-card" class="settings-card result-card" hidden>
+          <div class="result-header">
+            <div>
+              <div class="eyebrow" style="color:#0f766e">ESTIMACIÓN ENERGÉTICA</div>
+              <h2 id="calc-res-title">Resultados del cálculo</h2>
+            </div>
+            <span id="calc-res-date" class="result-date-badge">Hoy</span>
+          </div>
+
+          <div class="results-comparison-grid">
+            <div class="result-box rmr-box">
+              <span class="res-box-label">GASTO EN REPOSO (RMR)</span>
+              <div class="res-box-val" id="calc-res-rmr">0 kcal</div>
+              <span class="res-box-desc">Energía vital en reposo absoluto (respiración, órganos, circulación)</span>
+            </div>
+            <div class="result-box tdee-box">
+              <span class="res-box-label">MANTENIMIENTO DIARIO (TDEE)</span>
+              <div class="res-box-val" id="calc-res-tdee">0 kcal</div>
+              <span class="res-box-desc">Gasto total estimado con tu actividad para mantener tu peso</span>
+            </div>
+          </div>
+
+          <div class="calc-meta-details" id="calc-meta-details">
+            Basado en 80 kg · 178 cm · 28 años · Actividad moderada (x1.55)
+          </div>
+
+          <div class="disclaimer-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><strong>Aviso orientativo:</strong> Este resultado es una estimación matemática teórica y puede diferir de tu gasto metabólico real. No constituye una prescripción médica ni nutricional obligatoria.
+          </div>
+
+          <!-- ESCENARIOS ORIENTATIVOS SEGÚN INTENCIÓN -->
+          <div class="scenarios-section">
+            <h3 style="font-size:14px;margin:14px 0 8px">Escenarios orientativos de ingesta:</h3>
+            <div class="scenarios-list">
+              <div class="scenario-item active" data-scenario="maintain">
+                <div>
+                  <strong>Mantener peso (predeterminado)</strong>
+                  <span class="scenario-sub">Equilibrio energético estimado</span>
+                </div>
+                <div class="scenario-kcal" id="scen-val-maintain">2,300 kcal</div>
+              </div>
+              <div class="scenario-item" data-scenario="loss">
+                <div>
+                  <strong>Reducción gradual conservadora</strong>
+                  <span class="scenario-sub">Déficit moderado orientativo (~300 kcal/día)</span>
+                </div>
+                <div class="scenario-kcal" id="scen-val-loss">2,000 kcal</div>
+              </div>
+              <div class="scenario-item" data-scenario="gain">
+                <div>
+                  <strong>Aumento gradual conservador</strong>
+                  <span class="scenario-sub">Superávit moderado orientativo (~300 kcal/día)</span>
+                </div>
+                <div class="scenario-kcal" id="scen-val-gain">2,600 kcal</div>
+              </div>
+            </div>
+            <p class="scenarios-disclaimer">
+              Los cambios de peso no son lineales ni garantizados. Para menores de edad, embarazo, lactancia o condiciones médicas, no apliques restricciones calóricas sin supervisión sanitaria.
+            </p>
+          </div>
+
+          <!-- OPCIÓN A vs OPCIÓN B -->
+          <div class="options-decision-box">
+            <div class="option-row">
+              <div class="option-info">
+                <strong>OPCIÓN A: Solo consultar mi estimación</strong>
+                <p>Guarda el perfil para recordar tus datos y mostrar tu mantenimiento como referencia informativa en «Hoy». <strong>No establece una meta obligatoria ni activa barras de progreso.</strong></p>
+              </div>
+              <button type="button" id="btn-calc-opt-a" class="secondary-button">Guardar solo como referencia</button>
+            </div>
+
+            <div class="option-divider"></div>
+
+            <div class="option-row">
+              <div class="option-info">
+                <strong>OPCIÓN B: Establecer como objetivo diario</strong>
+                <p>Aplica este valor a tu meta diaria activa de calorías en «Hoy». Podrás confirmarlo o editar la cifra antes de guardar. <strong>No modifica tu meta de proteínas.</strong></p>
+              </div>
+              <button type="button" id="btn-calc-opt-b" class="primary-button">Establecer como meta diaria</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 5: HISTORIAL DE COMIDAS -->
+      <section id="view-historial" class="view" hidden aria-labelledby="heading-historial">
+        <div class="section-lead"><div><div class="eyebrow">TUS DÍAS</div><h1 id="heading-historial">Historial</h1></div></div>
+        <p class="muted-intro">Consulta los registros de cada día. Los alimentos conservan congelados los valores nutricionales con los que fueron guardados.</p>
+        <div id="history-container" class="history-container"></div>
+      </section>
+
+      <!-- VISTA 6: AJUSTES -->
+      <section id="view-ajustes" class="view" hidden aria-labelledby="heading-ajustes">
+        <div class="section-lead"><div><div class="eyebrow">CONFIGURACIÓN</div><h1 id="heading-ajustes">Ajustes</h1></div></div>
+
+        <!-- ACCESOS RÁPIDOS DENTRO DE AJUSTES -->
+        <div class="settings-nav-cards">
+          <button type="button" class="settings-nav-card" id="btn-goto-calc">
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+            </span>
+            <div>
+              <strong>Calculadora de gasto calórico</strong>
+              <span>Estimar RMR y mantenimiento con Mifflin-St Jeor</span>
+            </div>
+            <span class="s-arrow">›</span>
+          </button>
+          <button type="button" class="settings-nav-card" id="btn-goto-peso">
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+            </span>
+            <div>
+              <strong>Seguimiento de peso corporal</strong>
+              <span>Historial, gráfica de evolución y tendencias</span>
+            </div>
+            <span class="s-arrow">›</span>
+          </button>
+          <button type="button" class="settings-nav-card" id="btn-goto-historial">
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            </span>
+            <div>
+              <strong>Historial de comidas</strong>
+              <span>Registro de días pasados y alimentos</span>
+            </div>
+            <span class="s-arrow">›</span>
+          </button>
+        </div>
+
+        <div class="settings-card">
+          <h2>Metas diarias personales</h2>
+          <p class="muted">Tus metas visuales diarias de referencia. Son totalmente voluntarias; puedes utilizarlas o borrarlas cuando desees.</p>
+          <div class="goal-setting-row">
+            <label class="form-label">
+              Meta de Calorías (kcal/día)
+              <input id="goal-input" type="number" min="0" max="20000" step="1" inputmode="numeric" placeholder="Sin meta activa" aria-label="Objetivo de calorías por día" />
+            </label>
+            <label class="form-label">
+              Meta de Proteínas (g/día)
+              <input id="protein-goal-input" type="number" min="0" max="1000" step="1" inputmode="numeric" placeholder="Sin meta activa" aria-label="Objetivo de proteínas por día" />
+            </label>
+          </div>
+          <div class="form-grid">
+            <button type="button" id="btn-save-goal" class="secondary-button">Guardar metas</button>
+            <button type="button" id="btn-clear-kcal-goal" class="outline-button danger-text">Quitar meta calórica</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2>Copias de seguridad</h2>
+          <p class="muted">Tus datos se guardan exclusivamente en este iPhone, no en un servidor. Exporta periódicamente una copia a Archivos o iCloud Drive para respaldar tus comidas, alimentos, peso y objetivos.</p>
+          <button type="button" id="btn-export" class="secondary-button full-width">Exportar copia de seguridad</button>
+          <label for="file-import" class="outline-button full-width">Importar copia JSON</label>
+          <input id="file-import" class="visually-hidden" type="file" accept=".json,application/json" />
+          <p class="warning-note">Importar sustituirá los datos actuales tras tu confirmación expresa. Es compatible con respaldos versión 1.0, 2.0 y 3.0.</p>
+        </div>
+
+        <div class="settings-card">
+          <h2>Almacenamiento offline</h2>
+          <p class="muted">La aplicación funciona 100% sin conexión después de abrirla e instalarla una vez con internet.</p>
+          <div id="storage-status" class="storage-status">Comprobando almacenamiento...</div>
+          <button type="button" id="btn-persist" class="secondary-button full-width">Solicitar protección de almacenamiento persistente</button>
+        </div>
+
+        <div class="privacy-note">
+          <strong>Privacidad total</strong>
+          <p>Sin cuentas, sin Firebase, sin rastreadores, sin analítica ni sincronización remota. Tu peso e información nutricional nunca salen de tu dispositivo.</p>
+        </div>
+        <div class="version">MiCalorías · Versión 3.1 (Actualización Automática PWA)</div>
+      </section>
+    </main>
+
+    <!-- NAVEGACIÓN INFERIOR (5 ACCESOS PRINCIPALES) -->
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <button class="nav-item active" data-view="diario" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 15h3"/></svg>
+        <span>Hoy</span>
+      </button>
+      <button class="nav-item nav-item-add" id="nav-btn-add" aria-label="Registrar comida">
+        <div class="nav-add-circle">＋</div>
+        <span>Agregar</span>
+      </button>
+      <button class="nav-item" data-view="alimentos">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg>
+        <span>Mis alimentos</span>
+      </button>
+      <button class="nav-item" data-view="peso">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3M8 3h8"/></svg>
+        <span>Mi peso</span>
+      </button>
+      <button class="nav-item" data-view="ajustes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- DIÁLOGO: REGISTRAR / EDITAR PESO -->
+  <dialog id="weight-dialog" class="entry-dialog" aria-labelledby="weight-dialog-title">
+    <form id="weight-form" class="entry-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">PESO CORPORAL</div>
+          <h2 id="weight-dialog-title">Registrar peso</h2>
+        </div>
+        <button type="button" class="close-button" id="btn-close-weight-dialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <label class="form-label">
+        Fecha de la medición
+        <input id="w-date-input" type="date" required />
+      </label>
+
+      <label class="form-label">
+        Peso corporal (kg)
+        <input id="w-val-input" type="number" min="20" max="400" step="0.1" inputmode="decimal" placeholder="Ej.: 81.5" required />
+      </label>
+
+      <label class="form-label">
+        Nota opcional (ej. en ayunas, post-entreno)
+        <input id="w-note-input" type="text" maxlength="60" placeholder="Ej.: En ayunas" autocomplete="off" />
+      </label>
+
+      <div class="weight-tip-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>Se recomienda pesarse a la misma hora y bajo condiciones similares para evitar variaciones por retención de líquidos.
+      </div>
+
+      <button type="submit" id="btn-save-weight" class="primary-button wide-button">Guardar peso</button>
+    </form>
+  </dialog>
+
+  <!-- DIÁLOGO: CONFIRMAR Y AJUSTAR META DESDE LA CALCULADORA -->
+  <dialog id="goal-confirm-dialog" class="entry-dialog" aria-labelledby="goal-confirm-title">
+    <form id="goal-confirm-form" class="entry-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">ESTABLECER META</div>
+          <h2 id="goal-confirm-title">Confirmar objetivo calórico</h2>
+        </div>
+        <button type="button" class="close-button" id="btn-close-goal-dialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <p class="muted" style="margin-top:0">Puedes aceptar la estimación calculada o ajustar la cifra manualmente a un número redondo de tu elección.</p>
+
+      <label class="form-label">
+        Calorías diarias deseadas (kcal/día)
+        <input id="goal-confirm-input" type="number" min="500" max="15000" step="1" inputmode="numeric" required />
+      </label>
+
+      <div class="nutrition-preview-card" style="margin:10px 0 16px">
+        <div class="preview-metric">
+          <span class="preview-label">Meta propuesta</span>
+          <strong id="goal-preview-display" class="preview-val-kcal">2,300 kcal</strong>
+        </div>
+      </div>
+
+      <p class="warning-note" style="margin-bottom:16px">Esta acción solo actualizará tu meta de calorías en «Hoy». Tu meta de proteínas se conservará sin cambios.</p>
+
+      <button type="submit" id="btn-confirm-set-goal" class="primary-button wide-button">Confirmar y activar meta</button>
+    </form>
+  </dialog>
+
+  <!-- MODAL: REGISTRO RÁPIDO DE COMIDA -->
+  <dialog id="quick-add-dialog" class="entry-dialog" aria-labelledby="quick-add-title">
+    <div class="dialog-head">
+      <div>
+        <div class="eyebrow">REGISTRO RÁPIDO</div>
+        <h2 id="quick-add-title">Agregar a comida</h2>
+      </div>
+      <button type="button" class="close-button" id="btn-close-quick-add" aria-label="Cerrar">×</button>
+    </div>
+
+    <!-- SELECTOR DE COMIDA -->
+    <div class="meal-picker-bar" role="radiogroup" aria-label="Selecciona la comida">
+      <button type="button" class="meal-chip active" data-meal-choice="desayuno">Desayuno</button>
+      <button type="button" class="meal-chip" data-meal-choice="almuerzo">Almuerzo</button>
+      <button type="button" class="meal-chip" data-meal-choice="cena">Cena</button>
+      <button type="button" class="meal-chip" data-meal-choice="snack">Snack</button>
+    </div>
+
+    <!-- TABS DE MODO: DE BIBLIOTECA vs INGRESO MANUAL -->
+    <div class="mode-tabs">
+      <button type="button" class="mode-tab active" id="tab-mode-library">De Mis alimentos</button>
+      <button type="button" class="mode-tab" id="tab-mode-manual">Ingreso manual</button>
+    </div>
+
+    <!-- SECCIÓN DE BIBLIOTECA -->
+    <div id="quick-add-library-panel">
+      <label class="search-field compact">
+        <span aria-hidden="true">⌕</span>
+        <input id="quick-search-input" type="search" placeholder="Buscar en mis alimentos..." autocomplete="off" />
+      </label>
+
+      <!-- LISTA DE ALIMENTOS DISPONIBLES EN LA BIBLIOTECA -->
+      <div id="quick-foods-list" class="quick-foods-list"></div>
+
+      <!-- PANEL DE CONFIGURACIÓN DEL ALIMENTO SELECCIONADO -->
+      <div id="quick-selected-panel" class="selected-food-panel" hidden>
+        <div class="selected-food-header">
+          <div>
+            <strong id="q-selected-name">Nombre del alimento</strong>
+            <span id="q-selected-meta" class="selected-meta">120 kcal / scoop</span>
+          </div>
+          <button type="button" id="btn-clear-selection" class="text-button-mini">Cambiar</button>
+        </div>
+
+        <div class="quick-amount-row">
+          <label class="form-label" style="margin-bottom:6px">
+            Cantidad (<span id="q-selected-unit-label">scoop</span>)
+            <input id="q-amount-input" type="number" min="0.01" max="100000" step="any" inputmode="decimal" value="1" required />
+          </label>
+        </div>
+
+        <!-- CHIPS DE CANTIDAD RÁPIDA -->
+        <div id="quick-amount-chips" class="quick-chips-row"></div>
+
+        <div class="nutrition-preview-card">
+          <div class="preview-metric">
+            <span class="preview-label">Calorías</span>
+            <strong id="q-preview-kcal" class="preview-val-kcal">0 kcal</strong>
+          </div>
+          <div class="preview-divider"></div>
+          <div class="preview-metric">
+            <span class="preview-label">Proteínas</span>
+            <strong id="q-preview-protein" class="preview-val-protein">0 g</strong>
+          </div>
+        </div>
+
+        <button type="button" id="btn-add-staged-item" class="primary-button wide-button">＋ Añadir a esta comida</button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE INGRESO MANUAL -->
+    <form id="quick-add-manual-form" class="manual-entry-form" hidden>
+      <label class="form-label">
+        Nombre del ingrediente *
+        <input id="manual-name" type="text" maxlength="120" placeholder="Ej.: Huevo cocido" required autocomplete="off" />
+      </label>
+      <label class="form-label">
+        Marca (opcional)
+        <input id="manual-brand" type="text" maxlength="80" placeholder="Ej.: La Calera" autocomplete="off" />
+      </label>
+
+      <div class="base-type-toggle">
+        <label class="radio-pill">
+          <input type="radio" name="manual-base-type" value="weight_volume" checked />
+          <span>Por 100 g / ml</span>
+        </label>
+        <label class="radio-pill">
+          <input type="radio" name="manual-base-type" value="portion" />
+          <span>Por porción / unidad</span>
+        </label>
+      </div>
+
+      <!-- CAMPOS PARA BASE 100g/ml -->
+      <div id="manual-weight-fields">
+        <div class="form-grid">
+          <label class="form-label">
+            Cantidad *
+            <input id="manual-w-amount" type="number" min="0.01" max="100000" step="any" inputmode="decimal" placeholder="100" />
+          </label>
+          <label class="form-label">
+            Unidad *
+            <select id="manual-w-unit">
+              <option value="g">gramos (g)</option>
+              <option value="ml">mililitros (ml)</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="form-label">
+            Calorías por 100 <span class="manual-unit-txt">g</span> *
+            <input id="manual-w-kcal" type="number" min="0" max="10000" step="any" inputmode="decimal" placeholder="170" />
+          </label>
+          <label class="form-label">
+            Proteínas por 100 <span class="manual-unit-txt">g</span>
+            <input id="manual-w-protein" type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="Ej.: 25" />
+          </label>
+        </div>
+      </div>
+
+      <!-- CAMPOS PARA BASE PORCIÓN -->
+      <div id="manual-portion-fields" hidden>
+        <div class="form-grid">
+          <label class="form-label">
+            Cantidad de porciones *
+            <input id="manual-p-amount" type="number" min="0.01" max="10000" step="any" inputmode="decimal" placeholder="1" />
+          </label>
+          <label class="form-label">
+            Nombre de la porción *
+            <input id="manual-p-unit" type="text" maxlength="40" placeholder="Ej.: scoop, lata, unidad" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="form-label">
+            Calorías por porción *
+            <input id="manual-p-kcal" type="number" min="0" max="10000" step="any" inputmode="decimal" placeholder="120" />
+          </label>
+          <label class="form-label">
+            Proteínas por porción
+            <input id="manual-p-protein" type="number" min="0" max="200" step="any" inputmode="decimal" placeholder="Ej.: 24" />
+          </label>
+        </div>
+        <label class="form-label">
+          Peso de 1 porción en gramos (opcional)
+          <input id="manual-p-grams" type="number" min="0.1" max="5000" step="any" inputmode="decimal" placeholder="Ej.: 30" />
+        </label>
+      </div>
+
+      <div class="nutrition-preview-card">
+        <div class="preview-metric">
+          <span class="preview-label">Calorías calculadas</span>
+          <strong id="manual-preview-kcal" class="preview-val-kcal">0 kcal</strong>
+        </div>
+        <div class="preview-divider"></div>
+        <div class="preview-metric">
+          <span class="preview-label">Proteínas calculadas</span>
+          <strong id="manual-preview-protein" class="preview-val-protein">0 g</strong>
+        </div>
+      </div>
+
+      <label class="checkbox-line">
+        <input id="manual-save-to-library" type="checkbox" checked />
+        Guardar también en Mis alimentos para reutilizarlo
+      </label>
+
+      <button type="button" id="btn-add-manual-item" class="primary-button wide-button">＋ Añadir a esta comida</button>
+    </form>
+
+    <!-- INGREDIENTES ACUMULADOS EN ESTA SESIÓN (STAGED ITEMS) -->
+    <div id="staged-section" class="staged-section" hidden>
+      <div class="staged-head">
+        <strong>Ingredientes para guardar en <span id="staged-meal-name">Desayuno</span>:</strong>
+        <span id="staged-count" class="badge">0</span>
+      </div>
+      <div id="staged-items-list" class="staged-items-list"></div>
+
+      <div class="staged-totals-bar">
+        <div>
+          <div class="staged-totals-title">TOTAL DE ESTA COMIDA</div>
+          <div class="staged-totals-values">
+            <span id="staged-total-kcal" class="total-kcal-val">0 kcal</span>
+            <span class="sep">·</span>
+            <span id="staged-total-protein" class="total-prot-val">0 g prot</span>
+          </div>
+        </div>
+        <button type="button" id="btn-save-entire-meal" class="primary-button save-meal-btn">Guardar comida</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- MODAL: CREAR / EDITAR ALIMENTO EN "MIS ALIMENTOS" -->
+  <dialog id="food-dialog" class="entry-dialog" aria-labelledby="food-dialog-title">
+    <form id="food-form" class="entry-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">BIBLIOTECA</div>
+          <h2 id="food-dialog-title">Nuevo alimento</h2>
+        </div>
+        <button type="button" class="close-button" id="btn-close-food-dialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <label class="form-label">
+        Nombre del alimento *
+        <input id="f-name" type="text" maxlength="120" placeholder="Ej.: Mi proteína Whey, Atún Primor, Avena..." required autocomplete="off" />
+      </label>
+
+      <label class="form-label">
+        Marca o descripción (opcional)
+        <input id="f-brand" type="text" maxlength="80" placeholder="Ej.: Bell's, Optimum Nutrition, Casero..." autocomplete="off" />
+      </label>
+
+      <label class="form-label" style="margin-bottom:8px">Base nutricional *</label>
+      <div class="base-type-toggle">
+        <label class="radio-pill">
+          <input type="radio" name="f-base-type" value="weight_volume" checked />
+          <span>Por 100 g / ml</span>
+        </label>
+        <label class="radio-pill">
+          <input type="radio" name="f-base-type" value="portion" />
+          <span>Por porción (scoop, lata, etc.)</span>
+        </label>
+      </div>
+
+      <!-- CAMPOS BASE 100g/ml -->
+      <div id="f-fields-weight">
+        <div class="form-grid">
+          <label class="form-label">
+            Unidad habitual
+            <select id="f-unit">
+              <option value="g">Gramos (g)</option>
+              <option value="ml">Mililitros (ml)</option>
+            </select>
+          </label>
+          <label class="form-label">
+            Cantidad predeterminada
+            <input id="f-default-amount-w" type="number" min="0.01" max="10000" step="any" placeholder="100" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="form-label">
+            Calorías por 100 <span class="f-unit-label">g</span> *
+            <input id="f-kcal100" type="number" min="0" max="10000" step="any" inputmode="decimal" placeholder="Ej.: 170" />
+          </label>
+          <label class="form-label">
+            Proteínas por 100 <span class="f-unit-label">g</span>
+            <input id="f-protein100" type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="Ej.: 25" />
+          </label>
+        </div>
+      </div>
+
+      <!-- CAMPOS BASE PORCIÓN -->
+      <div id="f-fields-portion" hidden>
+        <div class="form-grid">
+          <label class="form-label">
+            Nombre de la unidad/porción *
+            <input id="f-portion-unit" type="text" maxlength="40" placeholder="Ej.: scoop, lata, rebanada, taza" />
+          </label>
+          <label class="form-label">
+            Porciones predeterminadas
+            <input id="f-default-amount-p" type="number" min="0.1" max="1000" step="any" placeholder="1" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="form-label">
+            Calorías por porción *
+            <input id="f-kcal-portion" type="number" min="0" max="10000" step="any" inputmode="decimal" placeholder="Ej.: 120" />
+          </label>
+          <label class="form-label">
+            Proteínas por porción
+            <input id="f-protein-portion" type="number" min="0" max="200" step="any" inputmode="decimal" placeholder="Ej.: 24" />
+          </label>
+        </div>
+        <label class="form-label">
+          Peso de la porción en gramos (opcional)
+          <input id="f-portion-grams" type="number" min="0.1" max="5000" step="any" inputmode="decimal" placeholder="Ej.: 30" />
+        </label>
+      </div>
+
+      <label class="checkbox-line" style="margin-top:10px">
+        <input id="f-favorite" type="checkbox" />
+        ⭐ Marcar como favorito (aparecerá primero al registrar)
+      </label>
+
+      <button type="submit" id="btn-save-food-item" class="primary-button wide-button">Guardar alimento</button>
+    </form>
+  </dialog>
+
+  <!-- MODAL: EDITAR INGREDIENTE EN EL DIARIO -->
+  <dialog id="entry-dialog" class="entry-dialog" aria-labelledby="entry-dialog-title">
+    <form id="entry-form" class="entry-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">DIARIO</div>
+          <h2 id="entry-dialog-title">Editar ingrediente</h2>
+        </div>
+        <button type="button" class="close-button" id="btn-close-entry-dialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <label class="form-label">
+        Comida
+        <select id="edit-entry-meal" required>
+          <option value="desayuno">Desayuno</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="cena">Cena</option>
+          <option value="snack">Snack</option>
+        </select>
+      </label>
+
+      <label class="form-label">
+        Nombre
+        <input id="edit-entry-name" type="text" maxlength="120" required autocomplete="off" />
+      </label>
+
+      <label class="form-label">
+        Marca (opcional)
+        <input id="edit-entry-brand" type="text" maxlength="80" autocomplete="off" />
+      </label>
+
+      <div class="form-grid">
+        <label class="form-label">
+          Cantidad consumida
+          <input id="edit-entry-amount" type="number" min="0.01" max="100000" step="any" inputmode="decimal" required />
+        </label>
+        <label class="form-label">
+          Unidad
+          <input id="edit-entry-unit" type="text" maxlength="30" required />
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-label" id="edit-kcal-label">
+          Calorías base
+          <input id="edit-entry-density-kcal" type="number" min="0" max="10000" step="any" inputmode="decimal" required />
+        </label>
+        <label class="form-label" id="edit-protein-label">
+          Proteínas base (opcional)
+          <input id="edit-entry-density-protein" type="number" min="0" max="500" step="any" inputmode="decimal" placeholder="—" />
+        </label>
+      </div>
+
+      <div class="nutrition-preview-card">
+        <div class="preview-metric">
+          <span class="preview-label">Calorías calculadas</span>
+          <strong id="edit-preview-kcal" class="preview-val-kcal">0 kcal</strong>
+        </div>
+        <div class="preview-divider"></div>
+        <div class="preview-metric">
+          <span class="preview-label">Proteínas calculadas</span>
+          <strong id="edit-preview-protein" class="preview-val-protein">0 g</strong>
+        </div>
+      </div>
+
+      <button type="submit" id="btn-save-entry-edit" class="primary-button wide-button">Guardar cambios</button>
+    </form>
+  </dialog>
+
+  <!-- MODAL: USAR ALIMENTO DIRECTAMENTE DESDE MIS ALIMENTOS -->
+  <dialog id="use-food-dialog" class="entry-dialog" aria-labelledby="use-food-title">
+    <form id="use-food-form" class="entry-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">AÑADIR AL DIARIO</div>
+          <h2 id="use-food-title">Añadir a comida</h2>
+        </div>
+        <button type="button" class="close-button" id="btn-close-use-dialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="selected-food-header" style="margin-bottom:14px">
+        <div>
+          <strong id="u-food-name">Nombre</strong>
+          <span id="u-food-meta" class="selected-meta">Detalle nutricional</span>
+        </div>
+      </div>
+
+      <label class="form-label">
+        Comida
+        <select id="u-meal-select" required>
+          <option value="desayuno">Desayuno</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="cena">Cena</option>
+          <option value="snack">Snack</option>
+        </select>
+      </label>
+
+      <label class="form-label">
+        Cantidad (<span id="u-unit-label">g</span>)
+        <input id="u-amount-input" type="number" min="0.01" max="100000" step="any" inputmode="decimal" required />
+      </label>
+
+      <!-- CHIPS RÁPIDOS -->
+      <div id="u-amount-chips" class="quick-chips-row"></div>
+
+      <div class="nutrition-preview-card">
+        <div class="preview-metric">
+          <span class="preview-label">Calorías</span>
+          <strong id="u-preview-kcal" class="preview-val-kcal">0 kcal</strong>
+        </div>
+        <div class="preview-divider"></div>
+        <div class="preview-metric">
+          <span class="preview-label">Proteínas</span>
+          <strong id="u-preview-protein" class="preview-val-protein">0 g</strong>
+        </div>
+      </div>
+
+      <button type="submit" id="btn-confirm-use-food" class="primary-button wide-button">Añadir a mi comida</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>
